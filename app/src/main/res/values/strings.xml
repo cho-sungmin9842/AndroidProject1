@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">MiniProject</string>
+    <string name="home">홈</string>
+    <string name="quiz">퀴즈풀기</string>
+    <string name="list">내역조회</string>
+    <string name="os">운영체제 문제풀기</string>
+    <string name="sw">소프트웨어공학 문제풀기</string>
+    <string name="android">안드로이드 문제풀기</string>
+    <string name="java">자바 문제풀기</string>
+    <string name="signin">로그인</string>
+    <string name="signup">회원가입</string>
+    <string name="search">아이템조회</string>
+    <string name="osexplanation1">물리 메모리를 확장하여 사용하는 디스크 영역은 무엇인가?</string>
+    <string name="osexplanation2">물리 메모리보다 큰 프로세스나 여러 개의 작은 프로세스를 동시에 실행시켜,사용자나 응용프로그램에게 무한대의 메모리가 있다고 느끼도록 하는 메모리 관리 기법은 무엇인가?</string>
+    <string name="swexplanation1">소프트웨어 기능 뿐만 아니라 성능, 신뢰성이나 보안성 등과 같은 소프트웨어 품질 속성에 따라 테스팅 방법을 분류할 때 ISO/IEC/IEEE 29119에서는 테스트 (  )에 따른 분류라 한다. 한 단어로 답하라.</string>
+    <string name="swexplanation2">단위 테스팅, 통합 테스팅, 시스템 테스팅, 인수 테스팅은 테스트  ()에 따른 분류이다. 한 단어로 답하라.</string>
+    <string name="androidexplanation1">안드로이드에서 사용하는 일종의 메시지 객체로 다른 앱 구성 요소에게 어떤 작업 요청을 하는데 사용된다. 대표적으로 액티비티나 서비스 등을 시작할 때 사용된다. 이것은 무엇인가?</string>
+    <string name="androidexplanation2">안드로이드에서 사용자의 결정이나 입력을 받기 위해 화면에 표시되는 작은 윈도우는 무엇인가?</string>
+    <string name="javaexplanation1">자바에서 확장하다라는 뜻으로 슈퍼클래스 혹은 부모클래스를 상속받기 위해 사용하는 예약어는 무엇인가?</string>
+    <string name="javaexplanation2">오버로딩(overloading)과 오버라이딩(overriding)은 자바에서 어떤 것을 이루기 위한 것인가?</string>
+
+</resources>
