@@ -17,5 +17,4 @@ class MainActivity : AppCompatActivity() {
             MyBottomSheetDialog("signup").show(supportFragmentManager,"")
         }
     }
-    // 추가한 코드
 }
