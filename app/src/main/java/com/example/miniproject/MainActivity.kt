@@ -17,5 +17,5 @@ class MainActivity : AppCompatActivity() {
             MyBottomSheetDialog("signup").show(supportFragmentManager,"")
         }
     }
-    //git ..
+    // 추가한 코드
 }
