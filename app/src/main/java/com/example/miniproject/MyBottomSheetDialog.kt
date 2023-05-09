@@ -10,62 +10,44 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import com.example.miniproject.databinding.ItemDialogLayoutBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
-class MyBottomSheetDialog(val mode:String) : BottomSheetDialogFragment() {
+class MyBottomSheetDialog(private val mode: String) : BottomSheetDialogFragment() {
     private lateinit var binding: ItemDialogLayoutBinding
-    private val viewModel:MyViewModel by activityViewModels()
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        isCancelable=false
-        binding= ItemDialogLayoutBinding.inflate(inflater,container,false)
+        isCancelable = false
+        binding = ItemDialogLayoutBinding.inflate(inflater, container, false)
         return binding.root
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.ok.setOnClickListener {
-            if(mode=="signin")
-            {
-                if(binding.id.text.isEmpty() || binding.pw.text.isEmpty())
-                {
+            if (mode == "signin") {
+                // 이메일과 비밀번호중 입력하지 않은 것이 있는 경우
+                if (binding.email.text.isEmpty() || binding.pw.text.isEmpty()) {
                     AlertDialog.Builder(requireContext()).apply {
-                        setMessage("아이디와 비밀번호중 입력하지 않은것이 있습니다.다시입력하세요.")
+                        setMessage("이메일과 비밀번호중 입력하지 않은것이 있습니다.다시입력하세요.")
                         setCancelable(false)
-                        setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
+                        setPositiveButton("OK") { dialog: DialogInterface, int: Int ->
                             dialog.dismiss()
                         }
                         show()
                     }
-                }
-                else
-                {
-                    if(viewModel.itemSize==0)
-                    {
-                        AlertDialog.Builder(requireContext()).apply {
-                            setMessage("없는 아이디와 비밀번호입니다.회원가입을 해주세요.")
-                            setCancelable(false)
-                            setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
-                                dialog.dismiss()
-                            }
-                            show()
-                        }
-                    }
-                    else
-                    {
-                        val item = viewModel.getallitem()
-                        var k = 0
-                        for (i in 0 until item.size) {
-                            if (item.get(i).id == binding.id.text.toString() && item.get(i).pw == binding.pw.text.toString()) {
-                                startActivity(Intent(context, SignInActivity::class.java))
-                            } else {
-                                k = k + 1
-                            }
-                        }
-                        if (k == item.size) {
+                } else {    //  이메일과 비밀번호 둘다 입력한 경우
+                    Firebase.auth.signInWithEmailAndPassword(
+                        binding.email.text.toString(),
+                        binding.pw.text.toString()
+                    ).addOnCompleteListener(requireActivity()) { // it: Task<AuthResult!>
+                        if (it.isSuccessful) {  // 로그인이 성공한 경우
+                            startActivity(Intent(context, SignInActivity::class.java))
+                        } else {    // 로그인이 실패한 경우
                             AlertDialog.Builder(requireContext()).apply {
-                                setMessage("없는 아이디와 비밀번호입니다.다시로그인하거나 회원가입을 해주세요.")
+                                setMessage("없는 이메일과 비밀번호입니다.")
                                 setCancelable(false)
                                 setPositiveButton("OK") { dialog: DialogInterface, int: Int ->
                                     dialog.dismiss()
@@ -75,68 +57,42 @@ class MyBottomSheetDialog(val mode:String) : BottomSheetDialogFragment() {
                         }
                     }
                 }
-            }
-            else if(mode=="signup")
-            {
-                val item=Item(binding.id.text.toString(),binding.pw.text.toString())
-                if(binding.id.text.isEmpty() || binding.pw.text.isEmpty())
-                {
+            } else if (mode == "signup") {
+                val item = Item(binding.email.text.toString(), binding.pw.text.toString())
+//                이메일이나 비밀번호를 입력하지 않은 것이 있는 경우
+                if (binding.email.text.isEmpty() || binding.pw.text.isEmpty()) {
                     AlertDialog.Builder(requireContext()).apply {
                         setCancelable(false)
-                        setMessage("아이디와 비밀번호중 입력하지 않은것이 있습니다.다시입력하세요.")
-                        setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
+                        setMessage("이메일과 비밀번호중 입력하지 않은것이 있습니다.다시입력하세요.")
+                        setPositiveButton("OK") { dialog: DialogInterface, int: Int ->
                             dialog.dismiss()
                         }
                         show()
                     }
-                }
-                else
-                {
-                    val viewmodelitem=viewModel.getallitem()
-                    if(viewmodelitem.isEmpty())
-                    {
-                        viewModel.addItem(item)
-                        AlertDialog.Builder(requireContext()).apply {
-                            setCancelable(false)
-                            setMessage("회원가입되었습니다")
-                            setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
-                                dialog.dismiss()
-                            }
-                            show()
-                        }
-                    }
-                    else
-                    {
-                        var a = 0
-                        for (i in 0 until viewmodelitem.size)
-                        {
-                            a = a + 1
-                            if (viewmodelitem.get(i).id == item.id)
-                            {
-                                AlertDialog.Builder(requireContext()).apply {
-                                    setCancelable(false)
-                                    setMessage("입력된 아이디는 이미있는 아이디입니다.다시입력해주세요.")
-                                    setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
-                                        dialog.dismiss()
-                                    }
-                                    show()
-                                }
-                                a = 0
-                            }
-                        }
-                        if (a == viewmodelitem.size)
-                        {
-                            viewModel.addItem(item)
+                } else {    // 이메일과 비밀번호를 둘 다 입력한 경우
+                    Firebase.auth.createUserWithEmailAndPassword(
+                        binding.email.text.toString(),
+                        binding.pw.text.toString()
+                    ).addOnCompleteListener(requireActivity()) {
+                        if (it.isSuccessful) {  // 회원가입에 성공한 경우
                             AlertDialog.Builder(requireContext()).apply {
                                 setCancelable(false)
                                 setMessage("회원가입되었습니다.")
-                                setPositiveButton("OK"){ dialog: DialogInterface, int:Int->
+                                setPositiveButton("OK") { dialog: DialogInterface, int: Int ->
+                                    dialog.dismiss()
+                                }
+                                show()
+                            }
+                        } else  // 회원가입에 실패한 경우
+                            AlertDialog.Builder(requireContext()).apply {
+                                setCancelable(false)
+                                setMessage("입력된 이메일이나 비밀번호는 이미 있습니다.다시입력해주세요.")
+                                setPositiveButton("OK") { dialog: DialogInterface, int: Int ->
                                     dialog.dismiss()
                                 }
                                 show()
                             }
                         }
-                    }
                 }
                 dismiss()
             }

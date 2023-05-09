@@ -3,57 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/basic">
 
-    <TextView
-        android:id="@+id/pointtv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="TextView"
-        android:textSize="30sp"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_margin="20dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:divider="#000000"
+        android:dividerHeight="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/plus1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="+1"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/pointtv"
-        app:layout_constraintTop_toBottomOf="@+id/pointtv" />
-
-    <Button
-        android:id="@+id/plus2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="+2"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/plus1"
-        app:layout_constraintTop_toBottomOf="@+id/plus1" />
-
-    <Button
-        android:id="@+id/plus3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="+3"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/plus2"
-        app:layout_constraintTop_toBottomOf="@+id/plus2" />
-
-    <Button
-        android:id="@+id/plus4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="+4"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/plus3"
-        app:layout_constraintTop_toBottomOf="@+id/plus3" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
