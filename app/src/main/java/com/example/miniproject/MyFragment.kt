@@ -8,9 +8,9 @@ import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.miniproject.databinding.*
@@ -20,14 +20,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Random
-
-fun randomNumCreate(): Int {
-    return Random().nextInt(100000)
-}
 
 class HomeFragment : Fragment() {
     private val randomArray = arrayOf(
@@ -35,6 +30,10 @@ class HomeFragment : Fragment() {
     )
     private val contentArray = arrayOf("수학문제", "야구퀴즈", "넌센스퀴즈", "사자성어")
     private val pointArray = arrayOf(1, 2, 3, 4)
+
+    private fun randomNumCreate(): Int {
+        return Random().nextInt(100000)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,14 +45,18 @@ class HomeFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Firebase.firestore.collection("totalPoint").document("mypoint").get().addOnSuccessListener {
-            (requireActivity() as AppCompatActivity).supportActionBar?.title =
-                "${it.data?.get("totalPoint")}P"
+        Firebase.firestore.collection("history").get().addOnSuccessListener {
+            var sum = 0
+            for (doc in it) {
+                sum += Integer.parseInt(doc.data["point"].toString())
+            }
+            (requireActivity() as AppCompatActivity).supportActionBar?.title = "${sum}P"
         }
         val binding = HomefragmentBinding.bind(view)
         binding.recyclerView.adapter = HomeAdapter(
             requireContext(),
             layoutInflater,
+            (requireActivity() as AppCompatActivity).supportActionBar,
             randomArray,
             contentArray,
             pointArray
@@ -65,8 +68,7 @@ class HomeFragment : Fragment() {
 }
 
 class QuizFragment : Fragment() {
-    private val db: FirebaseFirestore = Firebase.firestore
-    private val historyCollectionRef = db.collection("history")
+    private val historyCollectionRef = Firebase.firestore.collection("history")
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,13 +78,19 @@ class QuizFragment : Fragment() {
         return inflater.inflate(R.layout.quizfragment, container, false)
     }
 
+    private fun updateActionTitle(actionBar: ActionBar?) {
+        Firebase.firestore.collection("history").addSnapshotListener { value, error ->
+            var sum = 0
+            value?.documentChanges?.forEach { doc ->
+                sum += Integer.parseInt(doc.document.data["point"].toString())
+            }
+            actionBar?.title = "${sum}P"
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Firebase.firestore.collection("totalPoint").document("mypoint").get().addOnSuccessListener {
-            (requireActivity() as AppCompatActivity).supportActionBar?.title =
-                "${it.data?.get("totalPoint")}P"
-        }
-
+        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
         val binding = QuizfragmentBinding.bind(view)
         val imm = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         binding.os.setOnClickListener {
@@ -102,23 +110,13 @@ class QuizFragment : Fragment() {
                                 "date" to LocalDateTime.now()
                                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                             )
-                            historyCollectionRef.add(itemMap).addOnSuccessListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 성공",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }.addOnFailureListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 실패",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }
+                            historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                                .addOnFailureListener {}
+                            updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                             Snackbar.make(view, "정답입니다.", Snackbar.LENGTH_SHORT).show()
                             AlertDialog.Builder(requireContext()).apply {
                                 setMessage("문제를 더 풀까요?")
-                                setPositiveButton("네") { DialogInterface, Int ->
+                                setPositiveButton("네") { _, _ ->
                                     AlertDialog.Builder(requireContext()).apply {
                                         setCancelable(false)
                                         val binding = InputTextLayoutBinding.inflate(layoutInflater)
@@ -144,19 +142,9 @@ class QuizFragment : Fragment() {
                                                             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                                     )
                                                     historyCollectionRef.add(itemMap)
-                                                        .addOnSuccessListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 성공",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }.addOnFailureListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 실패",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }
+                                                        .addOnSuccessListener {}
+                                                        .addOnFailureListener {}
+                                                    updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                                                 } else {
                                                     Snackbar.make(
                                                         view,
@@ -208,22 +196,12 @@ class QuizFragment : Fragment() {
                                 "date" to LocalDateTime.now()
                                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                             )
-                            historyCollectionRef.add(itemMap).addOnSuccessListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 성공",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }.addOnFailureListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 실패",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }
+                            historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                                .addOnFailureListener {}
+                            updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                             AlertDialog.Builder(requireContext()).apply {
                                 setMessage("문제를 더 풀까요?")
-                                setPositiveButton("네") { DialogInterface, Int ->
+                                setPositiveButton("네") { _, _ ->
                                     AlertDialog.Builder(requireContext()).apply {
                                         setCancelable(false)
                                         val binding = InputTextLayoutBinding.inflate(layoutInflater)
@@ -244,24 +222,14 @@ class QuizFragment : Fragment() {
                                                             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                                     )
                                                     historyCollectionRef.add(itemMap)
-                                                        .addOnSuccessListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 성공",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }.addOnFailureListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 실패",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }
+                                                        .addOnSuccessListener {}
+                                                        .addOnFailureListener {}
                                                     Snackbar.make(
                                                         view,
                                                         "정답입니다.",
                                                         Snackbar.LENGTH_SHORT
                                                     ).show()
+                                                    updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                                                 } else {
                                                     Snackbar.make(
                                                         view,
@@ -312,22 +280,12 @@ class QuizFragment : Fragment() {
                                 "date" to LocalDateTime.now()
                                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                             )
-                            historyCollectionRef.add(itemMap).addOnSuccessListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 성공",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }.addOnFailureListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 실패",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }
+                            historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                                .addOnFailureListener {}
+                            updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                             AlertDialog.Builder(requireContext()).apply {
                                 setMessage("문제를 더 풀까요?")
-                                setPositiveButton("네") { DialogInterface, Int ->
+                                setPositiveButton("네") { _, _ ->
                                     AlertDialog.Builder(requireContext()).apply {
                                         setCancelable(false)
                                         val binding = InputTextLayoutBinding.inflate(layoutInflater)
@@ -348,19 +306,9 @@ class QuizFragment : Fragment() {
                                                             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                                     )
                                                     historyCollectionRef.add(itemMap)
-                                                        .addOnSuccessListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 성공",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }.addOnFailureListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 실패",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }
+                                                        .addOnSuccessListener {}
+                                                        .addOnFailureListener {}
+                                                    updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                                                     Snackbar.make(
                                                         view,
                                                         "정답입니다.",
@@ -416,22 +364,12 @@ class QuizFragment : Fragment() {
                                 "date" to LocalDateTime.now()
                                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                             )
-                            historyCollectionRef.add(itemMap).addOnSuccessListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 성공",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }.addOnFailureListener {
-                                Snackbar.make(
-                                    binding.root,
-                                    "데이터 저장 실패",
-                                    Snackbar.LENGTH_SHORT
-                                ).show()
-                            }
+                            historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                                .addOnFailureListener {}
+                            updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                             AlertDialog.Builder(requireContext()).apply {
                                 setMessage("문제를 더 풀까요?")
-                                setPositiveButton("네") { DialogInterface, Int ->
+                                setPositiveButton("네") { _, _ ->
                                     AlertDialog.Builder(requireContext()).apply {
                                         setCancelable(false)
                                         val binding = InputTextLayoutBinding.inflate(layoutInflater)
@@ -452,24 +390,14 @@ class QuizFragment : Fragment() {
                                                             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                                     )
                                                     historyCollectionRef.add(itemMap)
-                                                        .addOnSuccessListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 성공",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }.addOnFailureListener {
-                                                            Snackbar.make(
-                                                                binding.root,
-                                                                "데이터 저장 실패",
-                                                                Snackbar.LENGTH_SHORT
-                                                            ).show()
-                                                        }
+                                                        .addOnSuccessListener {}
+                                                        .addOnFailureListener {}
                                                     Snackbar.make(
                                                         view,
                                                         "정답입니다.",
                                                         Snackbar.LENGTH_SHORT
                                                     ).show()
+                                                    updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                                                 } else {
                                                     Snackbar.make(
                                                         view,
@@ -507,8 +435,7 @@ class QuizFragment : Fragment() {
 }
 
 class SearchFragment : Fragment() {
-    private val db: FirebaseFirestore = Firebase.firestore
-    private val historyCollectionRef = db.collection("history")
+    private val historyCollectionRef = Firebase.firestore.collection("history")
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -519,13 +446,16 @@ class SearchFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Firebase.firestore.collection("totalPoint").document("mypoint").get().addOnSuccessListener {
-            (requireActivity() as AppCompatActivity).supportActionBar?.title =
-                "${it.data?.get("totalPoint")}P"
+        historyCollectionRef.get().addOnSuccessListener {
+            var sum = 0
+            for (doc in it) {
+                sum += Integer.parseInt(doc.data["point"].toString())
+            }
+            (requireActivity() as AppCompatActivity).supportActionBar?.title = "${sum}P"
         }
-        val items = mutableListOf<Array>()
         historyCollectionRef.orderBy("date", Query.Direction.DESCENDING).get()
             .addOnSuccessListener {
+                val items = mutableListOf<Array>()
                 for (i in it) {
                     items.add(
                         Array(
@@ -534,22 +464,35 @@ class SearchFragment : Fragment() {
                             i.data["date"].toString()
                         )
                     )
-                    val binding = SearchfragmentBinding.bind(view)
-                    val adapter = CustomAdapter(items.toList().reversed())
-                    binding.recyclerView.adapter = adapter//recyclerview 와 adapter(customAdapter) 연결
-                    binding.recyclerView.addItemDecoration(DividerItemDecoration(view.context, 1))
-                    binding.recyclerView.layoutManager = LinearLayoutManager(view.context)
-                    binding.recyclerView.setHasFixedSize(true)
                 }
-            }.addOnFailureListener {
-
-            }
+                val binding = SearchfragmentBinding.bind(view)
+                // ListAdapter를 이용한 adapter
+                val adapter=DataAdapter()
+                adapter.submitList(items.toList().reversed())
+                // RecyclerView.Adapter를 이용한 adapter
+//                val adapter = CustomAdapter(items.toList().reversed())
+                binding.recyclerView.adapter = adapter//recyclerview 와 adapter(customAdapter) 연결
+                binding.recyclerView.addItemDecoration(DividerItemDecoration(requireContext(), 1))
+                binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+                binding.recyclerView.setHasFixedSize(true)
+                // recyclerView의 마지막 아이템위치로 이동
+                binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+            }.addOnFailureListener {}
     }
 }
 
 class ShopFragment : Fragment() {
-    private val db: FirebaseFirestore = Firebase.firestore
-    private val historyCollectionRef = db.collection("history")
+    private val historyCollectionRef = Firebase.firestore.collection("history")
+
+    private fun updateActionTitle(actionBar: ActionBar?) {
+        Firebase.firestore.collection("history").addSnapshotListener { value, error ->
+            var sum = 0
+            value?.documentChanges?.forEach { doc ->
+                sum += Integer.parseInt(doc.document.data["point"].toString())
+            }
+            actionBar?.title = "${sum}P"
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -561,13 +504,10 @@ class ShopFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        var point = 0
-        Firebase.firestore.collection("totalPoint").document("mypoint").get().addOnSuccessListener {
-            (requireActivity() as AppCompatActivity).supportActionBar?.title =
-                "${it.data?.get("totalPoint")}P"
-            point = Integer.parseInt(it.data?.get("totalPoint").toString())
-        }
-
+        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
+        val actionTitle =
+            (requireActivity() as AppCompatActivity).supportActionBar?.title?.toString()
+        val point = Integer.parseInt(actionTitle?.substring(0, actionTitle?.length - 1))
         val binding = ShopfragmentBinding.bind(view)
         binding.cake.setOnClickListener {
             AlertDialog.Builder(requireContext()).apply {
@@ -582,20 +522,10 @@ class ShopFragment : Fragment() {
                             "date" to LocalDateTime.now()
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
-                        historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                            .addOnFailureListener {}
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }
@@ -611,7 +541,7 @@ class ShopFragment : Fragment() {
                 setCancelable(false)
                 setTitle("결제창")
                 setMessage("1포인트 차감됩니다.구매하시면 하단에 OK버튼을 눌러주세요.")
-                setPositiveButton("OK") { dialog, i ->
+                setPositiveButton("OK") { _, i ->
                     if (point >= 1) {
                         val itemMap = hashMapOf(
                             "content" to "커피 구매",
@@ -619,20 +549,10 @@ class ShopFragment : Fragment() {
                             "date" to LocalDateTime.now()
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
-                        historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                            .addOnFailureListener {}
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }
@@ -648,7 +568,7 @@ class ShopFragment : Fragment() {
                 setCancelable(false)
                 setTitle("결제창")
                 setMessage("3포인트 차감됩니다.구매하시면 하단에 OK버튼을 눌러주세요.")
-                setPositiveButton("OK") { dialog, i ->
+                setPositiveButton("OK") { _, i ->
                     if (point >= 3) {
                         val itemMap = hashMapOf(
                             "content" to "영화티켓 구매",
@@ -656,20 +576,10 @@ class ShopFragment : Fragment() {
                             "date" to LocalDateTime.now()
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
-                        historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                            .addOnFailureListener {}
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }
@@ -685,7 +595,7 @@ class ShopFragment : Fragment() {
                 setCancelable(false)
                 setTitle("결제창")
                 setMessage("5포인트 차감됩니다.구매하시면 하단에 OK버튼을 눌러주세요.")
-                setPositiveButton("OK") { dialog, i ->
+                setPositiveButton("OK") { _, i ->
                     if (point >= 5) {
                         val itemMap = hashMapOf(
                             "content" to "스마트폰 구매",
@@ -693,20 +603,10 @@ class ShopFragment : Fragment() {
                             "date" to LocalDateTime.now()
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
-                        historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                            .addOnFailureListener {}
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }
@@ -722,7 +622,7 @@ class ShopFragment : Fragment() {
                 setCancelable(false)
                 setTitle("결제창")
                 setMessage("3포인트 차감됩니다.구매하시면 하단에 OK버튼을 눌러주세요.")
-                setPositiveButton("OK") { dialog, i ->
+                setPositiveButton("OK") { _, i ->
                     if (point >= 3) {
                         val itemMap = hashMapOf(
                             "content" to "와인 구매",
@@ -730,20 +630,10 @@ class ShopFragment : Fragment() {
                             "date" to LocalDateTime.now()
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
-                        historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        historyCollectionRef.add(itemMap).addOnSuccessListener {}
+                            .addOnFailureListener {}
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }
@@ -768,19 +658,10 @@ class ShopFragment : Fragment() {
                                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                         )
                         historyCollectionRef.add(itemMap).addOnSuccessListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 성공",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
                         }.addOnFailureListener {
-                            Snackbar.make(
-                                binding.root,
-                                "데이터 저장 실패",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
                         }
                         Snackbar.make(view, "구매완료!", Snackbar.LENGTH_SHORT).show()
+                        updateActionTitle((requireActivity() as AppCompatActivity).supportActionBar)
                     } else {
                         Snackbar.make(view, "포인트가 부족함!", Snackbar.LENGTH_SHORT).show()
                     }

@@ -8,24 +8,22 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.RecyclerView
 import com.example.miniproject.databinding.HomeItemLayoutBinding
 import com.example.miniproject.databinding.InputTextLayoutBinding
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.Array
+import androidx.appcompat.app.ActionBar
 
 class HomeAdapter(
     private val context: Context,
     private val layoutInflater: LayoutInflater,
+    private val actionBar: ActionBar?,
     private val id: Array<Int>,
     private val content: Array<String>,
     private val point: Array<Int>
@@ -33,10 +31,21 @@ class HomeAdapter(
     //View를 담아두는 상자(ViewHolder)
     class ViewHolder(private val binding: HomeItemLayoutBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        @RequiresApi(Build.VERSION_CODES.O)
+
+        private fun updateActionTitle(actionBar: ActionBar?) {
+            Firebase.firestore.collection("history").addSnapshotListener { value, error ->
+                var sum = 0
+                value?.documentChanges?.forEach { doc ->
+                    sum += Integer.parseInt(doc.document.data["point"].toString())
+                }
+                actionBar?.title = "${sum}P"
+            }
+        }
+
         fun setContents(
             context: Context,
             layoutInflater: LayoutInflater,
+            actionBar: ActionBar?,
             pos: Int,
             id: Array<Int>,
             content: Array<String>,
@@ -78,6 +87,7 @@ class HomeAdapter(
                                                 Snackbar.LENGTH_SHORT
                                             ).show()
                                         }
+                                        updateActionTitle(actionBar)
                                     }
                                     else -> Snackbar.make(
                                         binding.root, "오답입니다.", Snackbar.LENGTH_SHORT
@@ -114,6 +124,7 @@ class HomeAdapter(
                                             Snackbar.LENGTH_SHORT
                                         ).show()
                                     }
+                                    updateActionTitle(actionBar)
                                 } else {
                                     Snackbar.make(it, "오답입니다.", Snackbar.LENGTH_SHORT).show()
                                 }
@@ -152,6 +163,7 @@ class HomeAdapter(
                                                 Snackbar.LENGTH_SHORT
                                             ).show()
                                         }
+                                        updateActionTitle(actionBar)
                                         Snackbar.make(view, "정답입니다.", Snackbar.LENGTH_SHORT).show()
                                     } else {
                                         Snackbar.make(view, "오답입니다.", Snackbar.LENGTH_SHORT).show()
@@ -191,6 +203,7 @@ class HomeAdapter(
                                             Snackbar.LENGTH_SHORT
                                         ).show()
                                     }
+                                    updateActionTitle(actionBar)
                                 } else {
                                     Snackbar.make(it, "오답입니다.", Snackbar.LENGTH_SHORT).show()
                                 }
@@ -211,7 +224,6 @@ class HomeAdapter(
                             show()
                         }
                     }
-
                 }
             }
         }
@@ -225,9 +237,8 @@ class HomeAdapter(
     }
 
     //ViewHolder에 데이터 연결
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.setContents(context, layoutInflater, position, id, content, point)
+        holder.setContents(context, layoutInflater, actionBar, position, id, content, point)
     }
 
     //항목의 개수 리턴

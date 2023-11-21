@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav"
     app:startDestination="@id/homeFragment">
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.miniproject.HomeFragment"
@@ -19,4 +20,5 @@
         android:id="@+id/shopFragment"
         android:name="com.example.miniproject.ShopFragment"
         android:label="ShopFragment" />
+
 </navigation>

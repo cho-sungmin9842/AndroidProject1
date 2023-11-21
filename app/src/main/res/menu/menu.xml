@@ -17,4 +17,5 @@
         android:id="@+id/shopFragment"
         android:icon="@drawable/ic_baseline_shop_24"
         android:title="@string/search" />
+
 </menu>
